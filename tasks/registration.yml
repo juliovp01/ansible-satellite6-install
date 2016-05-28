@@ -1,0 +1,28 @@
+---
+#Registering system with RHN.
+- name: rhn | registering system with RHN
+  command: /usr/bin/subscription-manager register --username={{ rhn_user }} --password={{ rhn_password }} --name={{ hostname_full }}
+  tags:
+    - rhn
+  ignore_errors: yes
+
+#Get the pool id for the pool that contains the Satellite product
+- name: rhn | get rhn pool id
+  shell: /usr/bin/subscription-manager list --all --available --matches="*Satellite*" | awk '/Pool ID/ {print $3}' | head -1
+  tags:
+    - rhn
+  register: pool_id
+  ignore_errors: yes
+
+#Attaching the system to the right Pool
+- name: rhn | subscribing to the right pool
+  command: /usr/bin/subscription-manager attach --pool={{ pool_id.stdout }}
+  tags:
+    - rhn
+  ignore_errors: yes
+
+#Enabling the repos
+- name: rhn | enabling the right repos
+  command: /usr/bin/subscription-manager repos --disable "*" --enable rhel-7-server-satellite-6.1-rpms --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms
+  tags:
+    - rhn

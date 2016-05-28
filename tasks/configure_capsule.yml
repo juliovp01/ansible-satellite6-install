@@ -1,0 +1,58 @@
+---
+#Create an Smart Proxy
+- name: configure capsule | create an smart proxy on the organization
+  become: yes
+  shell: hammer organization add-smart-proxy --name {{ organization }} --smart-proxy-id 1
+
+#Add location to the Smart Proxy
+- name: configure capsule  | add location smart proxy
+  command: hammer location add-smart-proxy --name {{ location }} --smart-proxy-id 1
+
+#Create domain 
+- name: configure capsule | add domain
+  become: yes
+  shell: hammer domain create --name='{{ dns_zone }}'
+  ignore_errors: yes
+
+- name: configure capsule |  add domain to organization
+  become: yes
+  shell: hammer organization add-domain --name {{ organization }} --domain {{ dns_zone }}
+
+#Create the DHCP Subnet
+- name: configure capsule | create subnet
+  become: yes
+  shell: hammer subnet create --dhcp-id 1 --dns-id 1 --dns-primary {{ ip_address_sat }} --domain-ids 1 --from {{ subnet_dhcp_start }} --to {{ subnet_dhcp_end }} --gateway {{ gateway }} --mask {{ subnet_dhcp_mask }} --name {{ subnet_dhcp_net_name }} --network {{ subnet_dhcp_subnet }} --tftp-id 1
+
+#Add location to Subnet
+- name: configure capsule | location add subnet
+  become: yes
+  shell: hammer location add-subnet --name {{ location }} --subnet {{ subnet_dhcp_net_name }}
+
+#Associate the domain to capsule
+- name: configure capsule | associate domain capsule
+  become: yes
+  shell: hammer domain update --dns-id 1 --id 1
+
+#Add Location to Domain
+- name: configure capsule | add location domain
+  become: yes
+  shell: hammer location add-domain --name {{ location }} --domain {{ dns_zone }}
+
+#Adding the Subnet the Organization
+- name: configure capsule | add subnet the organization
+  become: yes 
+  shell: hammer organization add-subnet --name {{ organization }} --subnet {{ subnet_dhcp_net_name }}
+
+#Add puppet environment
+- name: configure capsule | add puppet environment
+  become: yes 
+  shell: hammer organization add-environment --name {{ organization }} --environment {{ puppet_env }}
+
+#Add location to the environment
+- name: configure capsule | location add environment
+  become: yes 
+  shell: hammer location add-environment --name {{ location }} --environment {{ puppet_env }}
+
+#Add location to the organization
+- name: configure capsule | adding location to organization
+  shell: hammer location add-organization --name {{ location  }} --organization {{ organization }}

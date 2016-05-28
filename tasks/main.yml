@@ -1,0 +1,9 @@
+---
+# tasks files on main.yml as include arguments
+- include: registration.yml
+- include: firewall.yml
+- include: install_software.yml
+- include: install_satellite.yml
+- include: configure_satellite.yml
+- include: configure_capsule.yml
+

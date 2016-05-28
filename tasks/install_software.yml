@@ -1,0 +1,15 @@
+---
+#Install the base software
+- name: install_software
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - katello
+    - wget
+    - git
+    - net-tools
+    - bash-completion
+    - screen
+    - vim-*

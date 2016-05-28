@@ -1,0 +1,57 @@
+---
+#Create Hammer directory on /root
+- name: configure | create .hammer directory on user
+  file: 
+    path=~/.hammer
+    state=directory
+    mode=0755
+
+#Copy the hammer configuration from template to the .hammer directory
+- name: configure | set configuration for hammer from template
+  template:
+    src=hammer_config.yml.j2
+    dest=~/.hammer/cli_config.yml
+
+#Copy the manifest
+- name: configure | copy manifest 
+  become: yes
+  copy: 
+    src=satellite_manifest.zip
+    dest=/root/satellite_manifest.zip
+
+#Upload the manifest to the satellite
+- name: configure | upload the manifest
+  become: yes
+  shell: hammer subscription upload --file  /root/satellite_manifest.zip --organization {{ organization }}
+
+#Enabling repos on satellite
+- name: configure | enable repos
+  become: yes
+  shell: hammer repository-set enable --organization {{ organization }} --product  "{{ item.product_name }}" --name "{{ item.name_repo }}" --releasever "{{ item.rel }}" --basearch "{{ item.architecture}}"
+  with_items:
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (Kickstart)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Optional (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Supplementary (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 director for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
+    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 Operational Tools for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
+  ignore_errors: yes 
+
+- name: configure | enable satellite tools and rhel 7 extra (repos without releasever)
+  become: yes
+  shell: hammer repository-set enable --organization {{ organization }} --product  "{{ item.product_name }}" --name "{{ item.name_repo }}" --basearch "{{ item.architecture}}"
+  with_items:
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Satellite Tools 6.1 (for RHEL 7 Server) (RPMs)', architecture: 'x86_64'}
+    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)', architecture: 'x86_64'}
+  ignore_errors: yes
+
+#Get the repos ids and sync the repos
+- name: configure | grab repositories uuid
+  shell: hammer repository list --organization {{ organization }} | grep yum | awk '{print $1}'
+  register: repos
+
+- name: configure | sync repos on satellite
+  command: hammer repository synchronize --id {{ item }} --organization {{ organization }}
+  with_items: repos.stdout_lines
