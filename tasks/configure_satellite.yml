@@ -27,25 +27,10 @@
 #Enabling repos on satellite
 - name: configure | enable repos
   become: yes
-  shell: hammer repository-set enable --organization {{ organization }} --product  "{{ item.product_name }}" --name "{{ item.name_repo }}" --releasever "{{ item.rel }}" --basearch "{{ item.architecture}}"
-  with_items:
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (Kickstart)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Optional (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Supplementary (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 director for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
-    - { product_name: 'Red Hat OpenStack', name_repo: 'Red Hat OpenStack Platform 8 Operational Tools for RHEL 7 (RPMs)', rel: '7Server', architecture: 'x86_64'}
-  ignore_errors: yes 
-
-- name: configure | enable satellite tools and rhel 7 extra (repos without releasever)
-  become: yes
-  shell: hammer repository-set enable --organization {{ organization }} --product  "{{ item.product_name }}" --name "{{ item.name_repo }}" --basearch "{{ item.architecture}}"
-  with_items:
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Satellite Tools 6.1 (for RHEL 7 Server) (RPMs)', architecture: 'x86_64'}
-    - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)', architecture: 'x86_64'}
+  shell: hammer repository-set "{{ item.state }}" --organization {{ organization }} --product  "{{ item.product_name }}" --name "{{ item.name_repo }}" --releasever "{{ item.rel }}" --basearch "{{ item.architecture}}"
+  with_items: "{{ repositories }}"
   ignore_errors: yes
+  tags: repositories
 
 #Get the repos ids and sync the repos
 - name: configure | grab repositories uuid
