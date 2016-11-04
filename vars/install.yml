@@ -1,0 +1,14 @@
+---
+satellite_deployment_packages:
+  "6.1":
+    - "katello"
+  "6.2":
+    - "satellite"
+
+satellite_deployment_extra_packages:
+  - "wget"
+  - "git"
+  - "net-tools"
+  - "bash-completion"
+  - "screen"
+  - "vim-*"
