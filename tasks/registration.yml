@@ -1,28 +1,56 @@
 ---
 #Registering system with RHN.
-- name: rhn | registering system with RHN
-  command: /usr/bin/subscription-manager register --username={{ rhn_user }} --password={{ rhn_password }} --name={{ hostname_full }}
+- name: "RHN | registering system with RHN"
+  redhat_subscription:
+    state: "present"
+    username: "{{ satellite_deployment_rhn_user }}"
+    password: "{{ satellite_deployment_rhn_password }}"
+    consumer_name: "{{ satellite_deployment_hostname_full }}"
   tags:
-    - rhn
-  ignore_errors: yes
+    - "rhn"
+    - "skip_ansible_lint" # ANSIBLE0012
+
+
+- name: "Check if Satellite is subscribed"
+  shell: "/usr/bin/subscription-manager list --consumed
+    --matches='*Satellite*' | awk '/Pool ID/ {print $3}'"
+  tags:
+    - "rhn"
+    - "skip_ansible_lint" # ANSIBLE0012
+  register: "satellite_deployment_subscribed"
 
 #Get the pool id for the pool that contains the Satellite product
-- name: rhn | get rhn pool id
-  shell: /usr/bin/subscription-manager list --all --available --matches="*Satellite*" | awk '/Pool ID/ {print $3}' | head -1
+- name: "RHN | get RHN pool id"
+  shell: "/usr/bin/subscription-manager list --all --available
+    --matches='*Satellite*' | awk '/Pool ID/ {print $3}' | head -1"
   tags:
-    - rhn
-  register: pool_id
-  ignore_errors: yes
+    - "rhn"
+  register: "satellite_deployment_pool_id_command"
+  ignore_errors: "yes"
+  when: "{{ satellite_deployment_pool_id is undefined }}"
+
+- name: "Set pool_id fact"
+  set_fact:
+    "satellite_deployment_pool_id": "{{
+      satellite_deployment_pool_id_command.stdout }}"
+  when: "{{ satellite_deployment_pool_id is undefined }}"
 
 #Attaching the system to the right Pool
-- name: rhn | subscribing to the right pool
-  command: /usr/bin/subscription-manager attach --pool={{ pool_id.stdout }}
+- name: "RHN | subscribing to the right pool"
+  command: "/usr/bin/subscription-manager attach
+    --pool={{ satellite_deployment_pool_id }}"
   tags:
-    - rhn
-  ignore_errors: yes
+    - "rhn"
+    - "skip_ansible_lint" # ANSIBLE0012
+  ignore_errors: "yes"
+  when: "{{ satellite_deployment_subscribed.stdout == '' }}"
+
 
 #Enabling the repos
-- name: rhn | enabling the right repos
-  command: /usr/bin/subscription-manager repos --disable "*" --enable rhel-7-server-satellite-6.1-rpms --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms
+- name: "RHN | enabling the right repos"
+  command: "/usr/bin/subscription-manager repos --disable '*' --enable
+    rhel-7-server-satellite-{{ satellite_deployment_version }}-rpms
+    --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms"
   tags:
-    - rhn
+    - "rhn"
+    - "skip_ansible_lint" # ANSIBLE0012

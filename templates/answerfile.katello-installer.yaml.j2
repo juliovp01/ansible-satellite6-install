@@ -7,8 +7,8 @@
   foreman:
     organizations_enabled: true
     locations_enabled: true
-    initial_organization: "{{ organization }}"
-    initial_location: "{{ location }}"
+    initial_organization: "{{ satellite_deployment_organization }}"
+    initial_location: "{{ satellite_deployment_location }}"
     custom_repo: true
     configure_epel_repo: false
     configure_scl_repo: false
@@ -21,8 +21,8 @@
     websockets_ssl_key: /etc/pki/katello/private/katello-apache.key
     websockets_ssl_cert: /etc/pki/katello/certs/katello-apache.crt
     unattended: true
-    admin_username: "{{ admin_user }}"
-    admin_password: "{{ admin_passwd }}"
+    admin_username: "{{ satellite_deployment_admin_username }}"
+    admin_password: "{{ satellite_deployment_admin_password }}"
   capsule:
     register_in_foreman: true
     pulp_master: true
@@ -30,22 +30,22 @@
     puppetca: true
     templates: false
     tftp: true
-    tftp_servername: "{{ ip_address_sat }}"
+    tftp_servername: "{{ satellite_deployment_ip_address }}"
     bmc: false
     bmc_default_provider: ipmitool
     dhcp: true
     dhcp_option_domain:
-      - "{{ dns_zone }}"
-    dhcp_interface: "{{ dhcp_mgmt_interface }}"
-    dhcp_gateway: "{{ gateway }}"
-    dhcp_range: "{{ dhcp_start }} {{ dhcp_end }}"
-    dhcp_nameservers: "{{ ip_address_sat }}"
+      - "{{ satellite_deployment_dns_zone }}"
+    dhcp_interface: "{{ satellite_deployment_dhcp_interface }}"
+    dhcp_gateway: "{{ satellite_deployment_gw_address }}"
+    dhcp_range: "{{ satellite_deployment_dhcp_start }} {{ satellite_deployment_dhcp_end }}"
+    dhcp_nameservers: "{{ satellite_deployment_ip_address }}"
     dns: true
-    dns_zone: "{{ dns_zone }}"
-    dns_reverse: "{{ dns_reverse_zone }}"
-    dns_inteface: "{{ dns_interface }}"
+    dns_zone: "{{ satellite_deployment_dns_zone }}"
+    dns_reverse: "{{ satellite_deployment_dns_reverse_zone }}"
+    dns_inteface: "{{ satellite_deployment_dns_interface }}"
     dns_forwarders:
-      - "{{ forwarder_dns }}"
+      - "{{ satellite_deployment_dns_forwarder }}"
   "foreman::plugin::bootdisk": true
   "foreman::plugin::discovery": true
   "foreman::plugin::hooks": true
@@ -53,6 +53,6 @@
   "foreman::plugin::chef": false
   "foreman::plugin::default_hostgroup": false
   "foreman::plugin::puppetdb": false
-  "foreman::plugin::setup": false   
+  "foreman::plugin::setup": false
   "foreman::plugin::templates": false
   "katello::plugin::gutterball": true
