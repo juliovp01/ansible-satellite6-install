@@ -57,3 +57,6 @@
   shell: "hammer repository synchronize --id '{{ item }}' --organization
     {{ satellite_deployment_organization }}"
   with_items: "{{ repos.stdout_lines }}"
+  register: "sync_repos_result"
+  retries: 3
+  until: "{{ sync_repos_result | success }}"
