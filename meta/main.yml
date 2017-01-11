@@ -1,4 +1,26 @@
 galaxy_info:
+<<<<<<< HEAD
+  author: Julio Villarreal 
+  description: Role to Install Red Hat Satellite 6.X
+  company: your company (optional)
+  
+   If the issue tracker for your role is not on github, uncomment the
+  next line and provide a value
+  issue_tracker_url: http://github.com/juliovp01/ansible-satellite6-install
+  
+ under MIT license. 
+  
+  platforms:
+  - name: EL
+    versions:
+    - 6
+    - 7
+  
+  galaxy_tags:
+  - satellie
+  - red hat 
+  - install
+=======
   author: Julio Villarreal Pelegrino
   description:
   company:
@@ -173,3 +195,4 @@ dependencies: []
   # List your role dependencies here, one per line.
   # Be sure to remove the '[]' above if you add dependencies
   # to this list.
+>>>>>>> dc079e347e3dcc9190b8085cfa0d30910b1679db
