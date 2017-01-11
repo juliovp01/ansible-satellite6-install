@@ -3,7 +3,8 @@ galaxy_info:
   description: Role to Install Red Hat Satellite 6.X
   company: your company (optional)
   issue_tracker_url: http://github.com/juliovp01/ansible-satellite6-install
-  
+  license: MIT
+  min_ansible_version: 1.6
   platforms:
   - name: EL
     versions:
@@ -11,6 +12,8 @@ galaxy_info:
     - 7
   
   galaxy_tags:
-  - satellie
-  - red hat 
+  - satellite
+  - redhat 
   - install
+  - configuration
+  - satellite6
