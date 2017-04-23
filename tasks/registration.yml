@@ -12,7 +12,7 @@
 
 
 - name: "Check if Satellite is subscribed"
-  shell: "/usr/bin/subscription-manager list --consumed
+  shell: "/usr/sbin/subscription-manager list --consumed
     --matches='*Satellite*' | awk '/Pool ID/ {print $3}'"
   tags:
     - "rhn"
@@ -21,7 +21,7 @@
 
 #Get the pool id for the pool that contains the Satellite product
 - name: "RHN | get RHN pool id"
-  shell: "/usr/bin/subscription-manager list --all --available
+  shell: "/usr/sbin/subscription-manager list --all --available
     --matches='*Satellite*' | awk '/Pool ID/ {print $3}' | head -1"
   tags:
     - "rhn"
@@ -37,7 +37,7 @@
 
 #Attaching the system to the right Pool
 - name: "RHN | subscribing to the right pool"
-  command: "/usr/bin/subscription-manager attach
+  command: "/usr/sbin/subscription-manager attach
     --pool={{ satellite_deployment_pool_id }}"
   tags:
     - "rhn"
@@ -48,7 +48,7 @@
 
 #Enabling the repos
 - name: "RHN | enabling the right repos"
-  command: "/usr/bin/subscription-manager repos --disable '*' --enable
+  command: "/usr/sbin/subscription-manager repos --disable '*' --enable
     rhel-7-server-satellite-{{ satellite_deployment_version }}-rpms
     --enable rhel-7-server-rpms --enable rhel-server-rhscl-7-rpms"
   tags:
