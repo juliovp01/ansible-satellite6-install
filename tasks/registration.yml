@@ -38,7 +38,7 @@
 #Attaching the system to the right Pool
 - name: "RHN | subscribing to the right pool"
   command: "/usr/sbin/subscription-manager attach
-    --pool={{ satellite_deployment_pool_id }}"
+    --pool={{ satellite_deployment_pool_id_command.stdout }}"
   tags:
     - "rhn"
     - "skip_ansible_lint" # ANSIBLE0012
