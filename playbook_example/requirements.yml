@@ -1,7 +1,9 @@
 ---
+- src: zaxos.lvm-ansible-role
+  name: volumes
 - src: bennojoy.ntp
   name: ntp
-- src: https://github.com/petr-balogh/satellite-deployment.git
-  # version is draft for testing before we push changes to master
-  version: draft
+- src: https://github.com/gswallow/ansible-satellite6-install.git
+  version: deconstruct
   name: satellite-deployment
+

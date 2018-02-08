@@ -1,0 +1,102 @@
+---
+#Add location to the organization
+- name: "Configure content | add location to organization"
+  shell: "HOME=/root hammer location add-organization
+    --name '{{ satellite_deployment_location  }}'
+    --organization '{{ satellite_deployment_organization }}'"
+
+- name: "Configure content | add default hostgroup"
+  shell: "HOME=/root hammer hostgroup create
+    --name default
+    --content-view-id 1
+    --organization '{{ satellite_deployment_organization }}'
+    --locations '{{ satellite_deployment_location }}'
+    --environment-id 1"
+  ignore_errors: "yes" # yes I'm lazy
+
+- name: "Configure content | add application lifecycle environment"
+  shell: "HOME=/root hammer lifecycle-environment create
+    --name '{{ item.name }}'
+    --description '{{ satellite_deployment_organization }} {{ item.name }} environment'
+    --prior '{{ item.prior }}'
+    --organization '{{ satellite_deployment_organization }}'"
+  with_items: "{{ satellite_deployment_lifecycle_environments }}"
+  ignore_errors: "yes"
+
+- name: "Configure content | create default content view"
+  shell: "HOME=/root hammer content-view create
+    --name default
+    --description 'Default, unfiltered view of all content'
+    --organization '{{ satellite_deployment_organization }}'"
+  ignore_errors: yes
+
+- include_tasks: _content_loop1.yml
+  with_items:
+    - "{{ satellite_deployment_repositories|map(attribute='product_name')|unique|list }}"
+  loop_control:
+    loop_var: product
+
+# Some intern probably thought it would be nifty to write a science project using postgres.
+- name: "Configure content | publish content view"
+  shell: "HOME=/root hammer content-view publish
+    --name default
+    --description 'content management performed by ansible'
+    --organization '{{ satellite_deployment_organization }}'"
+  tags:
+    - "publish_content"
+
+# And of course now you have to go back and scoop up the version you published.
+- name: "Configure content | get published version"
+  shell: "HOME=/root hammer content-view version list
+    --content-view default
+    --organization '{{ satellite_deployment_organization }}'
+    | awk '/^[0-9]/ {print $1}' | tail -1"
+  register: published_version_id
+  tags:
+    - "publish_content"
+
+# More massive database writes.
+- name: "Configure content | promote content view to environment"
+  shell: "HOME=/root hammer content-view version promote
+    --content-view default
+    --id {{ published_version_id.stdout }}
+    --to-lifecycle-environment {{ item.name }}
+    --organization '{{satellite_deployment_organization }}'"
+  with_items: 
+    - "{{ satellite_deployment_lifecycle_environments }}"
+  tags:
+    - "publish_content"
+
+# I honestly don't know why this has to be so difficult.
+- name: "Configure content | get subscription ids"
+  shell: "HOME=/root hammer subscription list
+    --organization '{{ satellite_deployment_organization }}'
+    | awk '/^[0-9]/ {print $1}'"
+  register: subscription_id
+
+- name: "Configure content | add activation keys"
+  shell: "HOME=/root hammer activation-key create
+    --name {{ item.name }}-autoreg
+    --unlimited-hosts
+    --description '{{ satellite_deployment_organization }} Stack in the {{ item.name }} Environment'
+    --lifecycle-environment {{ item.name }}
+    --content-view default
+    --organization '{{ satellite_deployment_organization }}'"
+  with_items:
+    - "{{ satellite_deployment_lifecycle_environments }}"
+  ignore_errors: "yes"
+
+- name: "Configure content | attach the stupid subscription"
+  shell: "HOME=/root hammer activation-key add-subscription
+    --name {{ item.name }}-autoreg
+    --subscription-id {{ subscription_id.stdout }}
+    --organization '{{ satellite_deployment_organization }}'"
+  with_items:
+    - "{{ satellite_deployment_lifecycle_environments }}"
+  ignore_errors: "yes"
+
+- include_tasks: _content_loop2.yml
+  with_items:
+    - "{{ satellite_deployment_lifecycle_environments }}"
+  loop_control:
+    loop_var: env

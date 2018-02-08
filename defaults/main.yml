@@ -33,6 +33,14 @@ satellite_deployment_answers:
 # configure_satellite:
 satellite_deployment_manifest_path: "satellite_manifest.zip"
 satellite_deployment_manifest_dest_path: "/root/satellite_manifest.zip"
+satellite_deployment_ssl_cert_path: "satellite.crt"
+satellite_deployment_ssl_cert_dest_path: "/root/satellite.crt"
+satellite_deployment_ssl_csr_path: "satellite.csr"
+satellite_deployment_ssl_csr_dest_path: "/root/satellite.csr"
+satellite_deployment_ssl_key_path: "satellite.key"
+satellite_deployment_ssl_key_dest_path: "/root/satellite.key"
+satellite_deployment_ssl_cacert_path: "satellite-ca.crt"
+satellite_deployment_ssl_cacert_dest_path: "/root/satellite-ca.crt"
 satellite_deployment_repositories:
   - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (Kickstart)', rel: '7Server', architecture: 'x86_64', state: enable}
   - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (RPMs)', rel: '7Server', architecture: 'x86_64', state: enable}

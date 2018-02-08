@@ -1,16 +1,30 @@
 ---
-- name: "Set remote_manifest fact"
+- name: "Facts | Set remote_manifest fact"
   set_fact:
     "satellite_deployment_remote_manifest": "{{
       'http://' in satellite_deployment_manifest_path or
       'ftp://' in satellite_deployment_manifest_path }}"
 
-- name: 'Execute command to get netmask'
-  shell: "ipcalc --netmask {{ satellite_deployment_ip_address }}/{{
-    satellite_deployment_net_prefix }} | cut -d= -f2"
-  register: "satellite_deployment_netmas_result"
-
-- name: "Set netmask fact"
+- name: "Facts | Set remote_ssl_cert fact"
   set_fact:
-    "satellite_deployment_netmask": "{{
-      satellite_deployment_netmas_result.stdout }}"
+    "satellite_deployment_remote_ssl_cert": "{{
+      'http://' in satellite_deployment_ssl_cert_path or
+      'ftp://' in satellite_deployment_ssl_cert_path }}"
+
+- name: "Facts | Set remote_ssl_csr fact"
+  set_fact:
+    "satellite_deployment_remote_ssl_csr": "{{
+      'http://' in satellite_deployment_ssl_csr_path or
+      'ftp://' in satellite_deployment_ssl_csr_path }}"
+
+- name: "Facts | Set remote_ssl_key fact"
+  set_fact:
+    "satellite_deployment_remote_ssl_key": "{{
+      'http://' in satellite_deployment_ssl_key_path or
+      'ftp://' in satellite_deployment_ssl_key_path }}"
+
+- name: "Facts | Set remote_ssl_cacert fact"
+  set_fact:
+    "satellite_deployment_remote_ssl_cacert": "{{
+      'http://' in satellite_deployment_ssl_cacert_path or
+      'ftp://' in satellite_deployment_ssl_cacert_path }}"

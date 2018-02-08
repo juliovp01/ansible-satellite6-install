@@ -1,0 +1,73 @@
+---
+#Copy the cert
+- name: "SSL | copy cert"
+  become: "yes"
+  copy:
+    src: "{{ satellite_deployment_ssl_cert_path }}"
+    dest: "{{ satellite_deployment_ssl_cert_dest_path }}"
+  when: not satellite_deployment_remote_ssl_cert
+
+- name: "SSL | copy cert from remote"
+  become: "yes"
+  get_url:
+    url: "{{ satellite_deployment_ssl_cert_path }}"
+    dest: "{{ satellite_deployment_ssl_cert_dest_path }}"
+  when: satellite_deployment_remote_ssl_cert
+
+#Copy the csr
+- name: "SSL | copy csr"
+  become: "yes"
+  copy:
+    src: "{{ satellite_deployment_ssl_csr_path }}"
+    dest: "{{ satellite_deployment_ssl_csr_dest_path }}"
+  when: not satellite_deployment_remote_ssl_csr
+
+- name: "SSL | copy csr from remote"
+  become: "yes"
+  get_url:
+    url: "{{ satellite_deployment_ssl_csr_path }}"
+    dest: "{{ satellite_deployment_ssl_csr_dest_path }}"
+  when: satellite_deployment_remote_ssl_csr
+
+#Copy the key
+- name: "SSL | copy key"
+  become: "yes"
+  copy:
+    src: "{{ satellite_deployment_ssl_key_path }}"
+    dest: "{{ satellite_deployment_ssl_key_dest_path }}"
+  when: not satellite_deployment_remote_ssl_key
+
+- name: "SSL | copy key from remote"
+  become: "yes"
+  get_url:
+    url: "{{ satellite_deployment_ssl_key_path }}"
+    dest: "{{ satellite_deployment_ssl_key_dest_path }}"
+  when: satellite_deployment_remote_ssl_key
+
+#Copy the cacert
+- name: "SSL | copy cacert"
+  become: "yes"
+  copy:
+    src: "{{ satellite_deployment_ssl_cacert_path }}"
+    dest: "{{ satellite_deployment_ssl_cacert_dest_path }}"
+  when: not satellite_deployment_remote_ssl_cacert
+
+- name: "SSL | copy cacert from remote"
+  become: "yes"
+  get_url:
+    url: "{{ satellite_deployment_ssl_cacert_path }}"
+    dest: "{{ satellite_deployment_ssl_cacert_dest_path }}"
+  when: satellite_deployment_remote_ssl_cacert
+
+#Update SSL certificates
+- name: "SSL | update SSL cert and CA bundle"
+  become: "yes"
+  shell: "satellite-installer --scenario satellite
+    --certs-server-cert '{{ satellite_deployment_ssl_cert_dest_path }}'
+    --certs-server-cert-req '{{ satellite_deployment_ssl_csr_dest_path }}'
+    --certs-server-key '{{ satellite_deployment_ssl_key_dest_path }}'
+    --certs-server-ca-cert '{{satellite_deployment_ssl_cacert_dest_path }}'
+    --certs-update-server --certs-update-server-ca"
+  ignore_errors: yes
+  tags:
+    - ssl

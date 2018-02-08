@@ -1,59 +1,129 @@
 ---
-# MY SATELLITE ENVIRONMENT VARIABLES
-# main vars
-satellite_deployment_hostname_short: "sat"
-satellite_deployment_hostname_full: "sat.domain.org"
+# Volumes
+lvm_volumes:
+  - vg_name: vg00
+    lv_name: pulp_cache
+    disk: xvdf
+    filesystem: xfs
+    mount: /var/cache/pulp
+    mount_options: defaults,noatime,nodiratime,discard
+  - vg_name: vg01
+    lv_name: pulp_storage
+    disk: xvdg
+    filesystem: xfs
+    mount: /var/lib/pulp
+    mount_options: defaults,noatime,nodiratime,discard
+  - vg_name: vg02
+    lv_name: mongodb
+    disk: xvdh
+    filesystem: xfs
+    mount: /var/lib/mongodb
+    mount_options: defaults,noatime,nodiratime,discard
+  - vg_name: vg03
+    lv_name: pgsql
+    disk: xvdi
+    filesystem: xfs
+    mount: /var/lib/pgsql
+    mount_options: defaults,noatime,nodiratime,discard
+
+# network - turn on/off foreman proxies
+satellite_foreman_proxy_dns: "false"
+satellite_foreman_proxy_dhcp: "false"
+satellite_foreman_proxy_puppetrun: "true"
+satellite_foreman_proxy_puppetca: "true"
+satellite_foreman_proxy_realm: "false"
+satellite_foreman_proxy_tftp: "false"
+
+# Satellite - manifest path (copied from S3 through an IAM instance profile)
+satellite_deployment_manifest_path: "/tmp/ansible/manifest.zip"
+
+# Satellite - main variables
+satellite_deployment_hostname_short: "satellite"
+satellite_deployment_hostname_full: "satellite.ivytech.edu"
 satellite_deployment_admin_username: "admin"
-satellite_deployment_admin_password: "123456"
-satellite_deployment_organization: "ORG"
-satellite_deployment_location: "BRNO"
+satellite_deployment_admin_password: "{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}"
+satellite_deployment_organization: "Ivy Tech Community College"
+satellite_deployment_location: "Indiana"
+satellite_deployment_version: 6.2
+satellite_deployment_rhn_user: "my-rhn-account"
+satellite_deployment_rhn_password: "my-rhn-password"
 
-# network
-satellite_deployment_ip_address: "10.35.184.33"
-satellite_deployment_network_address: "10.35.184.32"
-satellite_deployment_net_prefix: "27"
-satellite_deployment_gw_address: "10.35.184.62"
-satellite_deployment_net_interface: "eth1"
-satellite_deployment_dhcp_interface: "{{ satellite_deployment_net_interface }}"
-satellite_deployment_dns_interface: "{{ satellite_deployment_net_interface }}"
-satellite_deployment_dns_forwarder: "10.35.64.1"
-satellite_deployment_dns_zone: "sat.domain.com"
-satellite_deployment_dns_reverse_zone: "64.35.10.in-addr.arpa"
-satellite_deployment_dhcp_start: "10.35.184.34"
-satellite_deployment_dhcp_end: "10.35.184.61"
+# Satellite/capsule - network settings for dhcp / dns proxies (if configured)
+# Customize this if installing capsule.
+satellite_deployment_ip_address: "172.16.0.10"
+satellite_deployment_network_address: "172.16.0.0"
+satellite_deployment_gw_address: "172.16.0.1"
+satellite_deployment_net_interface: "eth0"
+satellite_deployment_dhcp_interface: "eth0"
+satellite_deployment_dns_interface: "172.16.0.10"
+satellite_deployment_dns_forwarder: "172.16.0.10"
+satellite_deployment_dns_reverse_zone: "16.172.in-addr.arpa"
+satellite_deployment_dhcp_start: "172.16.0.100"
+satellite_deployment_dhcp_end: "172.16.0.240"
+satellite_deployment_dns_zone: "ivytech.edu"
 
-#satellite_deployment_plugin_ports
+# ssl
+satellite_deployment_ssl_cert_path: "/tmp/ansible/satellite.crt"
+satellite_deployment_ssl_csr_path: "/tmp/ansible/satellite.csr"
+satellite_deployment_ssl_key_path: "/tmp/ansible/satellite.key"
+satellite_deployment_ssl_cacert_path: "/tmp/ansible/satellite-ca.crt"
 
+# email
+satellite_deployment_email_method: ":smtp"
+satellite_deployment_email_address: "satellite@ivytech.edu"
+satellite_deployment_email_smtp_starttls_auto: "true"
+satellite_deployment_email_smtp_address: "smtp.ivytech.edu"
+satellite_deployment_email_smtp_port: "587"
+satellite_deployment_email_smtp_domain: "ivytech.edu"
+satellite_deployment_email_smtp_authentication: ":login"
+satellite_deployment_email_smtp_username: "satellite@ivytech.edu"
+satellite_deployment_email_smtp_password: "satellite"
+satellite_deployment_administrator_email: "satellite@ivytech.edu"
 
 # install
 satellite_deployment_plugin_packages:
   - "foreman-discovery-image"
 
-# registration vars
-satellite_deployment_rhn_user: "rhn_user"
-satellite_deployment_rhn_password: "RhnPassW0rD"
-
-# answers for sattelite installer
+# answers for satellite installer
 satellite_deployment_answers:
   "foreman-initial-organization": "{{ satellite_deployment_organization }}"
   "foreman-initial-location": "{{ satellite_deployment_location }}"
   "foreman-admin-username": "{{ satellite_deployment_admin_username }}"
   "foreman-admin-password": "{{ satellite_deployment_admin_password }}"
-  "foreman-proxy-dns": "true"
-  "foreman-proxy-dns-interface": "{{ satellite_deployment_dns_interface }}"
-  "foreman-proxy-dns-zone": "{{ satellite_deployment_dns_zone }}"
-  "foreman-proxy-dns-forwarders": "{{ satellite_deployment_dns_forwarder }}"
-  "foreman-proxy-dns-reverse": "{{ satellite_deployment_dns_reverse_zone }}"
-  "foreman-proxy-dhcp": "true"
-  "foreman-proxy-dhcp-interface": "{{ satellite_deployment_dhcp_interface }}"
-  "foreman-proxy-dhcp-range": "{{ satellite_deployment_dhcp_start }}
-    {{ satellite_deployment_dhcp_end }}"
-  "foreman-proxy-dhcp-gateway": "{{ satellite_deployment_gw_address }}"
-  "foreman-proxy-dhcp-nameservers": "{{ satellite_deployment_ip_address }}"
-  "foreman-proxy-tftp": "true"
-  "foreman-proxy-tftp-servername": "{{ satellite_deployment_hostname_full }}"
-  "foreman-proxy-puppetca": "true"
-  "capsule-puppet": "true"
+  "foreman-admin-email": "{{ satellite_deployment_administrator_email }}"
+  "foreman-proxy-dns": "{{ satellite_foreman_proxy_dns }}"
+  "foreman-proxy-dhcp": "{{ satellite_foreman_proxy_dns }}"
+  "foreman-proxy-puppetca": "{{ satellite_foreman_proxy_puppetca }}"
+  "foreman-proxy-puppetrun": "{{ satellite_foreman_proxy_puppetrun }}"
+  "foreman-proxy-tftp": "{{ satellite_foreman_proxy_tftp }}"
 
-# configure_satellite:
-satellite_deployment_manifest_path: "http://my.local.server/sat-manifest.zip"
+# repositories to enable
+satellite_deployment_repositories:
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (Kickstart)', rel: '7Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server (RPMs)', rel: '7Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)', rel: '7Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Optional (RPMs)', rel: '7Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Supplementary (RPMs)', rel: '7Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Satellite Tools {{ satellite_deployment_version }} (for RHEL 7 Server) (RPMs)', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server (Kickstart)', rel: '6Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server (RPMs)', rel: '6Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)', rel: '6Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server - Optional (RPMs)', rel: '6Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server - Supplementary (RPMs)', rel: '6Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 6 Server - Extras (RPMs)', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Satellite Tools {{ satellite_deployment_version }} (for RHEL 6 Server) (RPMs)', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server (RPMs)', rel: '5Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server - Fastrack (RPMs)', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server - Optional Productivity Applications (RPMs)', rel: '5Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server - RH Common (RPMs)', rel: '5Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server - Supplementary (RPMs)', rel: '5Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Enterprise Linux 5 Server - Virtualization (RPMs)', rel: '5Server', architecture: 'x86_64', state: enable}
+  - { product_name: 'Red Hat Enterprise Linux Server', name_repo: 'Red Hat Satellite Tools {{ satellite_deployment_version }} (for RHEL 5 Server) (RPMs)', architecture: 'x86_64', state: enable}
+
+satellite_deployment_lifecycle_environments:
+  - { name: 'dev', prior: 'Library' }
+  - { name: 'test', prior: 'dev' }
+  - { name: 'staging', prior: 'test' }
+  - { name: 'prod', prior: 'staging' }
+

@@ -42,8 +42,15 @@ ansible-playbook command.
 
 ##Tags
 
+- **capsule**: configure a capsule
+- **email**: configure e-mail settings (SMTP relay server, email for admin user)
+- **enable_repos**: deploy repositories
 - **firewall**: set firewall
+- **install**: install additional software  
 - **install_satellite**: install satellite
-- **update_satellite**: update satellite
-- **satellite_deployment_repositories**: deploy repositories
+- **publish_content**: publish/promote a version of the default content view, which takes a long time
 - **rhn**: register rhn
+- **set_network**: actually configure network settings
+- **ssl**: import a custom SSL certificate
+- **sync**: sync repo content, which takes just shy of an eternity
+- **update_satellite**: update satellite

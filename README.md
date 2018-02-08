@@ -16,11 +16,14 @@ You will need ansible and all the required subscriptions for RHEL 7 and
 Satellite 6. Also please use some role for set NTP on your server. We recommend
 you use ansible-galaxy and install role for NTP **bennojoy.ntp** like we do.
 
+Note that this example also uses **zaxos.lvm-ansible-role** just recently.
+
 Role Variables
 --------------
 
 All variables are in files located in ./vars and are imported with specifics
 tasks.
+
 But to be open for others we decided specify only related variables there and
 all mandatory variables you have to specify in playbook vars or pass in extra
 vars parameter.
@@ -38,7 +41,11 @@ There is no role dependency for this role.
 Inventory File
 ----------
 
-The example of inventory file for this role is in  hosts.target.
+The hosts file in playbook_examples simply uses the HOSTGROUP environment varialbe, like so:
+
+```
+HOSTGROUP=satellite-server ansible-playbook -i /tmp/ansible/hosts -e '{satellite_deployment_vars: /tmp/ansible/seed}' config.yml --skip-tags firewall,capsule,set_network -c local
+```
 
 How to run the playbook
 ------------------------
@@ -67,6 +74,11 @@ You can see example of playbook in playbook_example/config.yml
 
 [playbook readme](./playbook_example/README.rst)
 
+Problems
+--------
+
+TASK [satellite-deployment : RHN | subscribing to the right pool]
+  - Remove the system from its attached subscription to redhat satellite, in the customer portal.
 
 License
 -------
@@ -81,3 +93,4 @@ Julio Villarreal Pelegrino <julio@linux.com> more at: http://wwww.juliovillarrea
 **Contributors:**
 
 Petr Balogh - <petr.balogh@gmail.com>
+

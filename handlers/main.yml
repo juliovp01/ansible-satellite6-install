@@ -1,2 +1,5 @@
 ---
 # handlers file for juliovp01.ansible_satellite6
+
+- name: restart katello service
+  shell: "/usr/bin/katello-service restart"

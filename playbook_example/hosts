@@ -1,0 +1,22 @@
+#!/usr/bin/python
+# Meant to replace the /etc/ansible/hosts script on hosts and allow for
+# local environment & role based ansible runs.
+
+import sys
+import os
+import json
+
+def main():
+    inventory = {"_meta": {"hostvars": {}}}
+
+    # Puts this host in the given HOSTGROUP
+    try:
+        host_group = os.environ.get("HOSTGROUP", 'default')
+        inventory[host_group] = ["127.0.0.1"]
+    except KeyError:
+        pass
+
+    print json.dumps(inventory)
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -2,10 +2,12 @@ satellite_deployment_fw_ports:
     - 22/tcp
     - 80/tcp
     - 443/tcp
+    - 5000/tcp
     - 5646/tcp
     - 5647/tcp
     - 5671/tcp
     - 5674/tcp
+    - 8000/tcp
     - 8140/tcp
     - 9090/tcp
     - 53/udp

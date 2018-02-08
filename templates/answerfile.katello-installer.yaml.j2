@@ -29,24 +29,12 @@
     puppet: true
     puppetca: true
     templates: false
-    tftp: true
-    tftp_servername: "{{ satellite_deployment_ip_address }}"
+    tftp: false
     bmc: false
     bmc_default_provider: ipmitool
-    dhcp: true
-    dhcp_option_domain:
-      - "{{ satellite_deployment_dns_zone }}"
-    dhcp_interface: "{{ satellite_deployment_dhcp_interface }}"
-    dhcp_gateway: "{{ satellite_deployment_gw_address }}"
-    dhcp_range: "{{ satellite_deployment_dhcp_start }} {{ satellite_deployment_dhcp_end }}"
-    dhcp_nameservers: "{{ satellite_deployment_ip_address }}"
-    dns: true
-    dns_zone: "{{ satellite_deployment_dns_zone }}"
-    dns_reverse: "{{ satellite_deployment_dns_reverse_zone }}"
-    dns_inteface: "{{ satellite_deployment_dns_interface }}"
-    dns_forwarders:
-      - "{{ satellite_deployment_dns_forwarder }}"
-  "foreman::plugin::bootdisk": true
+    dhcp: false
+    dns: false
+  "foreman::plugin::bootdisk": false
   "foreman::plugin::discovery": true
   "foreman::plugin::hooks": true
   "foreman::plugin::tasks": true
