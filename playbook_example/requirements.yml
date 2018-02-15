@@ -4,6 +4,6 @@
 - src: bennojoy.ntp
   name: ntp
 - src: https://github.com/gswallow/ansible-satellite6-install.git
-  version: deconstruct
+  version: master
   name: satellite-deployment
 
