@@ -33,6 +33,14 @@
   hostname: 
     name: "{{ satellite_deployment_hostname_full }}"
 
+- name: "Network | add {{ satellite_deployment_hostname_full }} to /etc/hosts"
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    line: "{{ ansible_default_ipv4.address }} {{ satellite_deployment_hostname_full }}"
+  tags:
+    - "debug"
+
 - name: "Network | Refresh facts after network reconfiguration"
   setup:
 
