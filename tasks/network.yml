@@ -30,8 +30,8 @@
     - "set_network"
 
 - name: "Network | Set Hostname"
-  hostname:
-    name: "{{ satellite_deploymnent_hostname_full }}"
+  hostname: 
+    name: "{{ satellite_deployment_hostname_full }}"
 
 - name: "Network | Refresh facts after network reconfiguration"
   setup:
