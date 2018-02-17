@@ -3,3 +3,7 @@
 
 - name: restart katello service
   shell: "/usr/bin/katello-service restart"
+
+- name: restart httpd
+  service: httpd
+  state: restarted

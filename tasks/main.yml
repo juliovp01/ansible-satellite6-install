@@ -10,3 +10,4 @@
 - include: configure_content.yml
 - include: ssl.yml
 - include: email.yml
+- include: bugs.yml

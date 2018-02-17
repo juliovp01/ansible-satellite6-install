@@ -38,8 +38,6 @@
     path: /etc/hosts
     state: present
     line: "{{ ansible_default_ipv4.address }} {{ satellite_deployment_hostname_full }}"
-  tags:
-    - "debug"
 
 - name: "Network | Refresh facts after network reconfiguration"
   setup:

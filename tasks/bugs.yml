@@ -1,0 +1,15 @@
+- name: "Bugs | fix SSL CA certs"
+  replace:
+    path: /etc/httpd/conf.d/05-foreman-ssl.conf
+    regexp: "katello-default-ca\.crt"
+    replace: "katello-server-ca.crt"
+    backup: no
+    notify: "restart httpd"
+
+- name:
+  replace:
+    path: /etc/httpd/conf.d/05-foreman-ssl.d/katello.conf
+    regexp: '<Location \/pulp\/api>'
+    replace: '<LocationMatch /pulp/api|/users/extlogin>'
+    backup: no
+    notify: "restart httpd"
