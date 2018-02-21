@@ -5,16 +5,6 @@
   - "install_satellite"
   - "update_satellite"
 
-# Copy the Katello answer file
-- name: "Install satellite | katello answer file copy"
-  template:
-    src: "answerfile.katello-installer.yaml.j2"
-    dest: "/etc/katello-installer/answers.katello-installer.yaml"
-  tags:
-  - "install_satellite"
-  - "update_satellite"
-  when: satellite_deployment_version|string == "6.1"
-
 # Check if service exist for foreman
 - name: "Install satellite | check if service exist"
   stat:
@@ -25,15 +15,7 @@
   - "install_satellite"
   - "update_satellite"
 
-#Run the install of Satellite if foreman is installed
-- name: "Install satellite | satellite installation"
-  command: "/usr/sbin/katello-installer"
-  when: foreman_service_file.stat.exists|bool == true and satellite_deployment_version|string == "6.1"
-  become: "yes"
-  tags:
-  - "install_satellite"
-  - "update_satellite"
-
+# Just set the install command fact for 6.2
 - name: "Install satellite | Update satellite-installer command"
   set_fact:
     satellite_deployment_installer_cmd: "{{ satellite_deployment_installer_cmd

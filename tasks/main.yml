@@ -3,11 +3,11 @@
 - include: registration.yml
 - include: network.yml
 - include: firewall.yml
+- include: ssl.yml
 - include: install_software.yml
 - include: install_satellite.yml
 - include: configure_satellite.yml
 - include: configure_capsule.yml
 - include: configure_content.yml
-- include: ssl.yml
 - include: email.yml
 - include: bugs.yml

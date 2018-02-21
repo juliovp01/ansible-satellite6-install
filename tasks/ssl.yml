@@ -60,14 +60,14 @@
   when: satellite_deployment_remote_ssl_cacert
 
 #Update SSL certificates
-- name: "SSL | update SSL cert and CA bundle"
-  become: "yes"
-  shell: "satellite-installer --scenario satellite
-    --certs-server-cert '{{ satellite_deployment_ssl_cert_dest_path }}'
-    --certs-server-cert-req '{{ satellite_deployment_ssl_csr_dest_path }}'
-    --certs-server-key '{{ satellite_deployment_ssl_key_dest_path }}'
-    --certs-server-ca-cert '{{satellite_deployment_ssl_cacert_dest_path }}'
-    --certs-update-server --certs-update-server-ca"
-  ignore_errors: yes
-  tags:
-    - ssl
+#- name: "SSL | update SSL cert and CA bundle"
+#  become: "yes"
+#  shell: "satellite-installer --scenario satellite
+#    --certs-server-cert '{{ satellite_deployment_ssl_cert_dest_path }}'
+#    --certs-server-cert-req '{{ satellite_deployment_ssl_csr_dest_path }}'
+#    --certs-server-key '{{ satellite_deployment_ssl_key_dest_path }}'
+#    --certs-server-ca-cert '{{satellite_deployment_ssl_cacert_dest_path }}'
+#    --certs-update-server --certs-update-server-ca"
+#  ignore_errors: yes
+#  tags:
+#    - ssl
