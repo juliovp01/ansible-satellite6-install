@@ -10,4 +10,3 @@
 - include: configure_capsule.yml
 - include: configure_content.yml
 - include: email.yml
-- include: bugs.yml
