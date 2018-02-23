@@ -6,7 +6,7 @@
 
 # main:
 # version should be double! Not string!
-satellite_deployment_version: 6.2
+satellite_deployment_version: 6.3
 satellite_deployment_hostname_short: "sat"
 satellite_deployment_hostname_full: "define.your.fqdn"
 satellite_deployment_ip_address: "127.0.0.1"

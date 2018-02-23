@@ -15,22 +15,24 @@
   - "install_satellite"
   - "update_satellite"
 
-# Just set the install command fact for 6.2
+# Set the install command fact
 - name: "Install satellite | Update satellite-installer command"
   set_fact:
     satellite_deployment_installer_cmd: "{{ satellite_deployment_installer_cmd
       }} --{{ item.key }}='{{ item.value }}'"
   with_dict: "{{ satellite_deployment_answers }}"
-  when: satellite_deployment_version|string == "6.2"
   tags:
   - "install_satellite"
   - "update_satellite"
 
-#Run the install of Satellite 6.2
+# May look at section 3.3.3.2 of the 6.3 install guide and set up an answer file:
+# https://access.redhat.com/documentation/en-us/red_hat_satellite/6.3/html/installation_guide/installing_satellite_server
+
+# Install satellite
 - name: "Install satellite | Satellite {{ satellite_deployment_version }} installation"
   command: "{{ satellite_deployment_installer_cmd }}"
   become: "yes"
-  when: foreman_service_file.stat.exists|bool == true and satellite_deployment_version|string == "6.2"
+  when: foreman_service_file.stat.exists|bool == true
   tags:
   - "install_satellite"
   - "update_satellite"

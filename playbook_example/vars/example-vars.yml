@@ -37,6 +37,9 @@ satellite_foreman_proxy_tftp: "false"
 # Satellite - manifest path (copied from S3 through an IAM instance profile)
 satellite_deployment_manifest_path: "/tmp/ansible/manifest.zip"
 
+# Satellite 6.3 - puppet 4 repositories
+satellite_deployment_enable_puppet_4_repositories: "true"
+
 # Satellite - main variables
 satellite_deployment_hostname_short: "satellite"
 satellite_deployment_hostname_full: "satellite.ivytech.edu"
@@ -44,7 +47,7 @@ satellite_deployment_admin_username: "admin"
 satellite_deployment_admin_password: "{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}"
 satellite_deployment_organization: "Ivy Tech Community College"
 satellite_deployment_location: "Indiana"
-satellite_deployment_version: 6.2
+satellite_deployment_version: 6.3
 satellite_deployment_rhn_user: "my-rhn-account"
 satellite_deployment_rhn_password: "my-rhn-password"
 

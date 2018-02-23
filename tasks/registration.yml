@@ -52,9 +52,19 @@
     - "rhn"
     - "skip_ansible_lint" # ANSIBLE0012
 
+#Optionally enable puppet 4 modules
+- name: "Registration | enable puppet 4 repositories"
+  command: "/usr/sbin/subscription-manager repos --enable
+    rhel-7-server-satellite-6.3-puppet4-rpms"
+  tags:
+    - "rhn"
+    - "skip_ansible_lint" # ANSIBLE0012
+  when: satellite_deployment_enable_puppet_4_repositories == "true" and satellite_deployment_version|string == "6.3"
+
 #Ensure that Red Hat Subscription Manager is not set to use a specific release
 - name: "Registration | enable all OS releases"
   command: "/usr/sbin/subscription-manager release --unset"
   tags:
     - "rhn"
     - "skip_ansible_lint" # ANSIBLE0012
+  notify: "yum clean all"
