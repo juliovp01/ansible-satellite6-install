@@ -6,12 +6,14 @@ lvm_volumes:
     disk: xvdf
     filesystem: xfs
     mount: /var/cache/pulp
+    mode: 1477
     mount_options: defaults,noatime,nodiratime,discard
   - vg_name: vg01
     lv_name: pulp_storage
     disk: xvdg
     filesystem: xfs
     mount: /var/lib/pulp
+    mode: 1477
     mount_options: defaults,noatime,nodiratime,discard
   - vg_name: vg02
     lv_name: mongodb

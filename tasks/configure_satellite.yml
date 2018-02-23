@@ -33,6 +33,7 @@
   shell: "HOME=/root hammer subscription upload --file
     {{ satellite_deployment_manifest_dest_path }} --organization
     '{{ satellite_deployment_organization }}'"
+  ignore_errors: "yes"
 
 #Enabling repos on satellite
 - name: "Configure satellite | enable repos"
