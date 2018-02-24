@@ -18,6 +18,9 @@ you use ansible-galaxy and install role for NTP **bennojoy.ntp** like we do.
 
 Note that this example also uses **zaxos.lvm-ansible-role** just recently.
 
+You will need a subscription manifest that **matches the version of Red Hat
+Satellite Server** you plan to install before getting started.
+
 Role Variables
 --------------
 
