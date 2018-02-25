@@ -1,5 +1,4 @@
 ---
-#Add location to the organization
 - name: "Configure content | add location to organization"
   shell: "HOME=/root hammer location add-organization
     --name '{{ satellite_deployment_location  }}'
@@ -12,7 +11,7 @@
     --organization '{{ satellite_deployment_organization }}'
     --locations '{{ satellite_deployment_location }}'
     --environment-id 1"
-  ignore_errors: "yes" # yes I'm lazy
+  ignore_errors: "yes"
 
 - name: "Configure content | add application lifecycle environment"
   shell: "HOME=/root hammer lifecycle-environment create
@@ -36,7 +35,6 @@
   loop_control:
     loop_var: product
 
-# Some intern probably thought it would be nifty to write a science project using postgres.
 - name: "Configure content | publish content view"
   shell: "HOME=/root hammer content-view publish
     --name default
@@ -45,17 +43,16 @@
   tags:
     - "publish_content"
 
-# And of course now you have to go back and scoop up the version you published.
 - name: "Configure content | get published version"
   shell: "HOME=/root hammer content-view version list
     --content-view default
     --organization '{{ satellite_deployment_organization }}'
-    | awk '/^[0-9]/ {print $1}' | tail -1"
+    --by VERSION
+    | awk '/^[0-9]/ {print $1}' | head -1"
   register: published_version_id
   tags:
     - "publish_content"
 
-# More massive database writes.
 - name: "Configure content | promote content view to environment"
   shell: "HOME=/root hammer content-view version promote
     --content-view default
@@ -67,7 +64,6 @@
   tags:
     - "publish_content"
 
-# I honestly don't know why this has to be so difficult.
 - name: "Configure content | get subscription ids"
   shell: "HOME=/root hammer subscription list
     --organization '{{ satellite_deployment_organization }}'
@@ -86,7 +82,7 @@
     - "{{ satellite_deployment_lifecycle_environments }}"
   ignore_errors: "yes"
 
-- name: "Configure content | attach the stupid subscription"
+- name: "Configure content | attach subscriptions to activation keys"
   shell: "HOME=/root hammer activation-key add-subscription
     --name {{ item.name }}-autoreg
     --subscription-id {{ subscription_id.stdout }}
