@@ -29,15 +29,15 @@
 # https://access.redhat.com/documentation/en-us/red_hat_satellite/6.3/html/installation_guide/installing_satellite_server
 
 # Make sure /var/lib/pulp and /var/cache/pulp are writable by non-root users
-- name: "Install satellite | Change perms on /var/cache/pulp"
-  file:
-    path: /var/cache/pulp
-    mode: "1477"
+#- name: "Install satellite | Change perms on /var/cache/pulp"
+#  file:
+#    path: /var/cache/pulp
+#    mode: "1477"
 
-- name: "Install satellite |Change perms on /var/lib/pulp"
-  file:
-    path: /var/lib/pulp
-    mode: "1477"
+#- name: "Install satellite |Change perms on /var/lib/pulp"
+#  file:
+#    path: /var/lib/pulp
+#    mode: "1477"
 
 # Install satellite
 - name: "Install satellite | Satellite {{ satellite_deployment_version }} installation"
