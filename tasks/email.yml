@@ -17,3 +17,24 @@
     --name administrator
     --value {{ satellite_deployment_administrator_email }}"
   tags: email
+
+- name: "Email | install mail gem"
+  gem:
+    name: "mail"
+    state: present
+  tags: email
+
+- name: "Email | create daily report script"
+  template:
+    src: "host_report.rb.j2"
+    dest: "/usr/local/bin/host_report.rb"
+    mode: "0755"
+  tags: email
+
+- name: "Email | set up reports cron job"
+  cron:
+    minute: 30
+    hour: 7
+    job: "/usr/local/bin/host_report.rb"
+  tags: email
+

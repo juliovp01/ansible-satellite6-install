@@ -1,0 +1,79 @@
+#!/usr/bin/ruby
+
+require 'rest-client'
+require 'json'
+require 'yaml'
+require 'mail'
+
+url = 'https://{{ satellite_deployment_hostname_full }}'
+foreman_url = "#{url}/api/v2"
+katello_url = "#{url}/katello/api/v2/"
+
+$email_to = '{{ satellite_deployment_administrator_email }}'
+$username = 'admin'
+$password = '{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}'
+
+org_name = '{{ satellite_deployment_organization }}'
+
+mailer_settings = YAML.load(File.read('/etc/foreman/email.yaml'))['production']
+Mail.defaults do 
+  delivery_method mailer_settings['delivery_method'], mailer_settings['smtp_settings'].inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo}
+end
+
+# Performs a GET using the passed URL location
+def get_json(location)
+  response = RestClient::Request.new(
+    :method => :get,
+    :url => location,
+    :user => $username,
+    :password => $password,
+    :headers => { :accept => :json,
+    :content_type => :json }
+  ).execute
+  JSON.parse(response.to_str)
+end
+
+def header
+  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
+    "Host",
+    "Last Checkin",
+    "Security",
+    "Bugfixes",
+    "Upgradable")
+end
+
+def lineitem(host)
+  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
+    host['name'],
+    host.fetch('subscription_facet_attributes', {}).fetch('last_checkin', "N/A"),
+    host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('security', "N/A").to_s,
+    host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('bugfix', "N/A").to_s,
+    host.fetch('content_facet_attributes', {}).fetch('upgradable_package_count', "N/A").to_s
+  )
+end
+
+def separator
+  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
+    "-" * 45,
+    "-" * 26,
+    "-" * 12,
+    "-" * 12,
+    "-" * 12)
+end
+
+content = header
+content << separator
+hosts = get_json("#{foreman_url}/hosts")['results']
+hosts.each do |host|
+  content << lineitem(host)
+end
+content << separator
+
+mail = Mail.new do
+  from mailer_settings['smtp_settings']['user_name']
+  to $email_to
+  subject "Satellite Host Report"
+  add_file :filename => 'host_report.txt', :content => content
+end
+
+mail.deliver!
