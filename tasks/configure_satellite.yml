@@ -86,7 +86,14 @@
     --sync-plan 'Daily Sync' --organization '{{ satellite_deployment_organization }}'"
   with_items: "{{ satellite_deployment_repositories }}"
 
-# Change default settings
+# Red Hat Satellite Server 6.3.0 has WebUI bugs where the sync status doesn't update.
+- name: "Configure satellite | https://bugzilla.redhat.com/show_bug.cgi?id=1551957"
+  cron:
+    minute: 30
+    hour: 7
+    job: "curl -u 'admin:{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}' -k -H 'content-type: application/json' -X PUT 'https://{{satellite_deployment_hostname_full }}/katello/api/organizations/1/sync_plans/1/sync' >& /dev/null"
+
+# Change default URLs
 - name: "Configure satellite | set foreman_url"
   shell: "HOME=/root hammer settings set
     --name foreman_url --value https://{{ satellite_deployment_hostname_full }}"
