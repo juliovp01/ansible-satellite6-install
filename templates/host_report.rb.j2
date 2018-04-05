@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 
+require 'time'
 require 'rest-client'
 require 'json'
 require 'yaml'
@@ -9,9 +10,11 @@ url = 'https://{{ satellite_deployment_hostname_full }}'
 foreman_url = "#{url}/api/v2"
 katello_url = "#{url}/katello/api/v2/"
 
+
 $email_to = '{{ satellite_deployment_administrator_email }}'
 $username = 'admin'
 $password = '{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}'
+$expire = '{{ satellite_host_check_in_expiry }}'
 
 org_name = '{{ satellite_deployment_organization }}'
 
@@ -33,47 +36,81 @@ def get_json(location)
   JSON.parse(response.to_str)
 end
 
-def header
-  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
-    "Host",
-    "Last Checkin",
-    "Security",
-    "Bugfixes",
-    "Upgradable")
+# Has the host checked in within ten days?
+def too_late?(host)
+  last = host.fetch('subscription_facet_attributes', {}).fetch('last_checkin', nil)
+  if last.nil?
+    true
+  else
+    Time.now.to_i - Time.parse(last).to_i > $expire
+  end
+end
+ 
+def lineitem(host, style)
+  red = "border: none; background-color: rgba(255, 99, 71, 0.5); padding: 8px; font-family: Arial, Helvetica, sans-serif"
+  if too_late?(host)
+    style = red
+  end
+  <<-"EOF"
+    <tr>
+      <td style="#{style}">#{host['name']}</td>
+      <td style="#{style}">#{host.fetch('subscription_facet_attributes', {}).fetch('last_checkin', 'N/A')}</td>
+      <td style="#{style}">#{host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('security', "N/A").to_s}</td>
+      <td style="#{style}">#{host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('bugfix', "N/A").to_s}</td>
+      <td style="#{style}">#{host.fetch('content_facet_attributes', {}).fetch('upgradable_package_count', "N/A").to_s}</td>
+    </tr>
+EOF
 end
 
-def lineitem(host)
-  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
-    host['name'],
-    host.fetch('subscription_facet_attributes', {}).fetch('last_checkin', "N/A"),
-    host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('security', "N/A").to_s,
-    host.fetch('content_facet_attributes', {}).fetch('errata_counts', {}).fetch('bugfix', "N/A").to_s,
-    host.fetch('content_facet_attributes', {}).fetch('upgradable_package_count', "N/A").to_s
-  )
+def table_def
+  th_style = "border: none; background-color: DodgerBlue; color: white; font-size: 18px; font-family: Arial, Helvetica, sans-serif; texgt-align: center"
+  <<-"EOF"
+  <h1 style="font-family: Arial, Helvetica, sans-serif">Satellite Host Report</h1>
+  <table style="border-collapse: collapse; width: 100%">
+    <tr>
+      <th style="#{th_style}">Host</th>
+      <th style="#{th_style}">Last Checkin</th>
+      <th style="#{th_style}">Security</th>
+      <th style="#{th_style}">Bugfixes</th>
+      <th style="#{th_style}">Upgradeable</th>
+    </tr>
+EOF
 end
 
-def separator
-  sprintf("%-45s %-26s %-12s %-12s %-12s\n",
-    "-" * 45,
-    "-" * 26,
-    "-" * 12,
-    "-" * 12,
-    "-" * 12)
+def table_end 
+  "  </table>"
 end
 
-content = header
-content << separator
+###### Do the things ######
+
+grey = "border: none; background-color: #f2f2f2; padding: 8px; font-family: Arial, Helvetica, sans-serif"
+nocolor = "border: none; padding: 8px; font-family: Arial, Helvetica, sans-serif"
 hosts = get_json("#{foreman_url}/hosts")['results']
+counter=0
+
+body = table_def
+
 hosts.each do |host|
-  content << lineitem(host)
+  counter % 2 == 0 ? body.concat(lineitem(host, nocolor)) : body.concat(lineitem(host, grey))
+  counter += 1
 end
-content << separator
+
+body.concat(table_end)
 
 mail = Mail.new do
   from mailer_settings['smtp_settings']['user_name']
   to $email_to
   subject "Satellite Host Report"
-  add_file :filename => 'host_report.txt', :content => content
+
+  text_part do
+    body 'This message is in html format.'
+  end
+
+  html_part do
+    content_type 'text/html; charset=UTF-8'
+    body body
+  end
 end
 
 mail.deliver!
+

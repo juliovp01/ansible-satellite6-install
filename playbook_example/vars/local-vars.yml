@@ -85,6 +85,7 @@ satellite_deployment_email_smtp_authentication: ":login"
 satellite_deployment_email_smtp_username: "satellite@ivytech.edu"
 satellite_deployment_email_smtp_password: "satellite"
 satellite_deployment_administrator_email: "satellite@ivytech.edu"
+satellite_host_check_in_expiry: '86400'
 
 # install
 satellite_deployment_plugin_packages:
