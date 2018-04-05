@@ -1,0 +1,14 @@
+#Copy the hammer configuration from template to the .hammer directory
+- name: "Backup | create /usr/local/bin/satellite-backup.sh"
+  template:
+    src: "satellite-backup.sh.j2"
+    dest: "/usr/local/bin/satellite-backup.sh"
+    mode: "0755"
+  tags: backup
+
+- name: "Backup | create cron job"
+  cron:
+    minute: 30
+    hour: 6
+    job: "/usr/local/bin/satellite-backup.sh"
+  tags: backup

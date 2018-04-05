@@ -1,0 +1,20 @@
+#!/bin/bash
+
+TARGET=$(mktemp -d -p /var/cache/pulp)
+set -o errexit -o errtrace -o pipefail
+trap cleanup ERR
+
+function cleanup { 
+  if [ -d $TARGET ]; then
+    rm -rf $TARGET
+  fi
+}
+
+if [ ! -z "$TARGET" ]; then
+  chgrp postgres $TARGET
+  chmod g+rwx $TARGET
+  satellite-backup --skip-pulp-content --online-backup --features all $TARGET -y > /dev/null 2>&1
+  aws s3 cp --recursive $TARGET/ s3://{{ satellite_backup_bucket }}/backups/ > /dev/null 2>&1
+  rm -rf $TARGET
+fi
+
