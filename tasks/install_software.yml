@@ -3,7 +3,6 @@
   include_vars: "vars/install.yml"
   tags:
     - "install_software"
-    - "update_satellite"
 
 #Install the base software
 - name: "Install software | Install base software"
@@ -17,5 +16,4 @@
     }}"
   tags:
     - "install_software"
-    - "update_satellite"
     - "skip_ansible_lint" # ANSIBLE0010

@@ -2,7 +2,6 @@
 - include: set_facts.yml
 - include: registration.yml
 - include: network.yml
-- include: firewall.yml
 - include: ssl.yml
 - include: install_software.yml
 - include: install_satellite.yml

@@ -52,6 +52,7 @@ satellite_deployment_location: "Indiana"
 satellite_deployment_version: 6.3
 satellite_deployment_rhn_user: "my-rhn-account"
 satellite_deployment_rhn_password: "my-rhn-password"
+satellite_backup_bucket: "my-s3-backups"
 
 # Satellite/capsule - network settings for dhcp / dns proxies (if configured)
 # Customize this if installing capsule.
