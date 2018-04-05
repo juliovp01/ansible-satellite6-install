@@ -42,7 +42,7 @@ def too_late?(host)
   if last.nil?
     true
   else
-    Time.now.to_i - Time.parse(last).to_i > $expire
+    Time.now.to_i - Time.parse(last).to_i > $expire.to_i
   end
 end
  
