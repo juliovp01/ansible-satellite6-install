@@ -29,6 +29,7 @@
     --organization '{{ satellite_deployment_organization }}'"
   ignore_errors: yes
 
+# Add products to content views
 - include_tasks: _content_loop1.yml
   with_items:
     - "{{ satellite_deployment_repositories|map(attribute='product_name')|unique|list }}"
@@ -91,6 +92,7 @@
     - "{{ satellite_deployment_lifecycle_environments }}"
   ignore_errors: "yes"
 
+# Content loop 2 overrides some kind of setting for Satellite Tools.  I don't know why you have to do this.
 - include_tasks: _content_loop2.yml
   with_items:
     - "{{ satellite_deployment_lifecycle_environments }}"
