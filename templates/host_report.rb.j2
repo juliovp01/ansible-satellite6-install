@@ -6,15 +6,15 @@ require 'json'
 require 'yaml'
 require 'mail'
 
-url = 'https://{{ satellite_deployment_hostname_full }}'
+ME = '{{ satellite_deployment_hostname_full }}'
+url = "https://#{ME}"
 foreman_url = "#{url}/api/v2"
-katello_url = "#{url}/katello/api/v2/"
-
 
 $email_to = '{{ satellite_deployment_administrator_email }}'
 $username = 'admin'
 $password = '{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}'
 $expire = '{{ satellite_host_check_in_expiry }}'
+PER_PAGE=100
 
 org_name = '{{ satellite_deployment_organization }}'
 
@@ -24,14 +24,14 @@ Mail.defaults do
 end
 
 # Performs a GET using the passed URL location
-def get_json(location)
+def get_json(location, page = 1)
+  location = "#{location}?page=#{page}&per_page=#{PER_PAGE}"
   response = RestClient::Request.new(
     :method => :get,
     :url => location,
     :user => $username,
     :password => $password,
-    :headers => { :accept => :json,
-    :content_type => :json }
+    :headers => { :accept => :json, :content_type => :json }
   ).execute
   JSON.parse(response.to_str)
 end
@@ -85,14 +85,20 @@ end
 
 grey = "border: none; background-color: #f2f2f2; padding: 8px; font-family: Arial, Helvetica, sans-serif"
 nocolor = "border: none; padding: 8px; font-family: Arial, Helvetica, sans-serif"
-hosts = get_json("#{foreman_url}/hosts")['results']
-counter=0
+color_counter=0
 
 body = table_def
 
-hosts.each do |host|
-  counter % 2 == 0 ? body.concat(lineitem(host, nocolor)) : body.concat(lineitem(host, grey))
-  counter += 1
+hostcount = get_json("#{foreman_url}/hosts")['total'].to_f
+pages = (hostcount / PER_PAGE).ceil
+
+1.upto(pages) do |page|
+  hosts = get_json("#{foreman_url}/hosts", page)['results']
+  hosts.each do |host|
+    next if host['name'].eql? ME
+    color_counter % 2 == 0 ? body.concat(lineitem(host, nocolor)) : body.concat(lineitem(host, grey))
+    color_counter += 1
+  end
 end
 
 body.concat(table_end)
