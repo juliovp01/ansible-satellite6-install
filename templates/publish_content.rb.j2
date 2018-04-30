@@ -1,0 +1,119 @@
+#!/usr/bin/ruby
+
+require 'time'
+require 'rest-client'
+require 'json'
+
+ME = 'satellite.ivytech.edu'
+URL = "https://#{ME}"
+ORG_NAME = '{{ satellite_deployment_organization }}'
+CV_NAME = 'default'
+FOREMAN_URL = "#{URL}/api/v2"
+TASKS_URL = "#{URL}/foreman_tasks/api"
+KATELLO_URL = "#{URL}/katello/api/v2"
+PER_PAGE=100
+
+$username = 'admin'
+$password = File.read('/root/.satellite_password').chomp
+
+# Performs a GET using the passed URL location
+def get_json(location, page = 1)
+  location = "#{location}?page=#{page}&per_page=#{PER_PAGE}"
+  response = RestClient::Request.new(
+    :method => :get,
+    :url => location,
+    :user => $username,
+    :password => $password,
+    :headers => { :accept => :json, :content_type => :json }
+  ).execute
+  JSON.parse(response.to_str)
+end
+
+# Performs a POST using the passed URL location
+def post_json(location, json_data = {})
+  location = "#{location}"
+  response = RestClient::Request.new(
+    :method => :post,
+    :url => location,
+    :user => $username,
+    :password => $password,
+    :headers => { :accept => :json, :content_type => :json },
+    :payload => JSON.generate(json_data)
+  ).execute
+  JSON.parse(response.to_str)
+end
+
+# Performs a POST using the passed URL location
+def delete_json(location, json_data = {})
+  location = "#{location}"
+  response = RestClient::Request.new(
+    :method => :delete,
+    :url => location,
+    :user => $username,
+    :password => $password,
+    :headers => { :accept => :json, :content_type => :json },
+    :payload => JSON.generate(json_data)
+  ).execute
+  JSON.parse(response.to_str)
+end
+
+def poll_task(id)
+  poll_result = get_json("#{TASKS_URL}/tasks/#{id}")
+  while poll_result['state'] != "stopped" do
+    sleep 5
+    poll_result = get_json("#{TASKS_URL}/tasks/#{id}")
+  end
+  puts "id: #{id} state: #{poll_result['state']} result: #{poll_result['resultl']}"
+  poll_result['result']
+end
+
+# ----------v do the things v-------- # 
+
+organizations = get_json("#{FOREMAN_URL}/organizations")['results']
+my_org_id = organizations.map { |o| o['id'] if o['name'] == ORG_NAME }.first
+
+content_views = get_json("#{KATELLO_URL}/content_views")['results']
+my_content_view = content_views.map { |v| v if v['name'] == CV_NAME }.first
+
+# Get lifecycle environments, in order of inheritence
+paths = get_json("#{KATELLO_URL}/organizations/#{my_org_id}/environments/paths")['results']['environments'].first
+lifecycle_envs = paths['environments']
+order = []
+lifecycle_envs.each do |e|
+  if e['prior'].nil?
+    order.unshift({'name' => e['name'], 'id' => e['id']})
+  elsif order.include?(e['prior']['name'])
+    order.insert(order.index(e['prior']['name']) + 1, {'name' => e['name'], 'id' => e['id']})
+  else
+    order.push({'name' => e['name'], 'id' => e['id']})
+  end
+end
+
+# Publish a new version of the content view
+print "Publishing new version of the #{CV_NAME} content view..."
+publish_task = post_json("#{KATELLO_URL}/content_views/#{my_content_view['id']}/publish")
+res = poll_task publish_task['id']
+puts res
+
+# Publish the new version of the content view to each lifecycle environment, in order
+if res == "success"
+  content_view_versions = get_json("#{KATELLO_URL}/content_views/#{my_content_view['id']}/")['versions'].sort { |v1, v2| v1['version'] <=> v2['version'] }
+  version_id = content_view_versions.last['id']
+  order.each do |e|
+    print "Promoting version #{version_id} of #{CV_NAME} to #{e['name']}..."
+    promote_task = post_json("#{KATELLO_URL}/content_view_versions/#{version_id}/promote", {'environment_id' => e['id']})
+    res = poll_task promote_task['id']
+    print res
+    sleep 60
+  end
+end
+
+# Cleanup everything except for the last three versions
+content_view_versions[0..-3].each do |v|
+  print "Deleting version v['version']..."
+  delete_task = delete_json("#{KATELLO_URL}/content_view_versions/#{v['id']}"
+  res = poll_task delete_task['id']
+  print res
+end
+
+

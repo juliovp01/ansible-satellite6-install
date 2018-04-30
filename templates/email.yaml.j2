@@ -1,0 +1,20 @@
+---
+production:
+{% if satellite_deployment_email_method == ":smtp" %}
+  delivery_method: :smtp
+  smtp_settings:
+    enable_starttls_auto: {{ satellite_deployment_email_smtp_starttls_auto }}
+    address: {{ satellite_deployment_email_smtp_address }}
+    port: {{ satellite_deployment_email_smtp_port }}
+    domain: {{ satellite_deployment_email_smtp_domain }}
+    authentication: {{ satellite_deployment_email_smtp_authentication }}
+    {% if satellite_deployment_email_smtp_username is defined -%}
+    user_name: {{ satellite_deployment_email_smtp_username }}
+    password: {{ satellite_deployment_email_smtp_password }}
+    {% endif %}
+{% endif %}
+{% if satellite_deployment_email_method == ":sendmail" %}
+  delivery_method: :sendmail
+  sendmail_settings:
+    arguments: "-i -t -G"
+{% endif %}

@@ -1,12 +1,11 @@
 ---
-- name: "Include install vars"
+- name: "Install software | Include install vars"
   include_vars: "vars/install.yml"
   tags:
-    - "install"
-    - "update_satellite"
+    - "install_software"
 
 #Install the base software
-- name: "Install_software"
+- name: "Install software | Install base software"
   become: "yes"
   yum:
     name: "{{ item }}"
@@ -16,6 +15,5 @@
     satellite_deployment_extra_packages + satellite_deployment_plugin_packages
     }}"
   tags:
-    - "install"
-    - "update_satellite"
+    - "install_software"
     - "skip_ansible_lint" # ANSIBLE0010

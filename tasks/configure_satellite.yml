@@ -1,43 +1,44 @@
 ---
 #Create Hammer directory on /root
-- name: "Configure | create .hammer directory on user"
+- name: "Configure satellite | create .hammer directory on user"
   file:
-    path: "~/.hammer"
+    path: "/root/.hammer"
     state: "directory"
     mode: "0755"
 
 #Copy the hammer configuration from template to the .hammer directory
-- name: "Configure | set configuration for hammer from template"
+- name: "Configure satellite | set configuration for hammer from template"
   template:
     src: "hammer_config.yml.j2"
-    dest: "~/.hammer/cli_config.yml"
+    dest: "/root/.hammer/cli_config.yml"
 
 #Copy the manifest
-- name: "Configure | copy manifest"
+- name: "Configure satellite | copy manifest"
   become: "yes"
   copy:
     src: "{{ satellite_deployment_manifest_path }}"
     dest: "{{ satellite_deployment_manifest_dest_path }}"
-  when: "{{ not satellite_deployment_remote_manifest }}"
+  when: not satellite_deployment_remote_manifest
 
-- name: "Configure | copy manifest from remote"
+- name: "Configure satellite | copy manifest from remote"
   become: "yes"
   get_url:
     url: "{{ satellite_deployment_manifest_path }}"
     dest: "{{ satellite_deployment_manifest_dest_path }}"
-  when: "{{ satellite_deployment_remote_manifest }}"
+  when: satellite_deployment_remote_manifest
 
 #Upload the manifest to the satellite
-- name: "Configure | upload the manifest"
+- name: "Configure satellite | upload the manifest"
   become: "yes"
-  shell: "hammer subscription upload --file
+  shell: "HOME=/root hammer subscription upload --file
     {{ satellite_deployment_manifest_dest_path }} --organization
-    {{ satellite_deployment_organization }}"
+    '{{ satellite_deployment_organization }}'"
+  ignore_errors: "yes"
 
 #Enabling repos on satellite
-- name: "Configure | enable repos"
+- name: "Configure satellite | enable repos"
   become: "yes"
-  shell: "hammer repository-set '{{ item.state }}' --organization
+  shell: "HOME=/root hammer repository-set '{{ item.state }}' --organization
     '{{ satellite_deployment_organization }}'
     --product '{{ item.product_name }}' --name '{{ item.name_repo }}'
     {% if item.rel is defined %} --releasever '{{ item.rel }}' {% endif %}
@@ -45,18 +46,170 @@
   with_items: "{{ satellite_deployment_repositories }}"
   ignore_errors: "yes"
   tags:
-    - "satellite_deployment_repositories"
+    - enable_repos
 
 #Get the repos ids and sync the repos
-- name: "Configure | grab repositories uuid"
-  shell: "hammer repository list --organization
-    {{ satellite_deployment_organization }} | grep yum | awk '{print $1}'"
+- name: "Configure satellite | grab repositories uuid"
+  shell: "HOME=/root hammer repository list --organization
+    '{{ satellite_deployment_organization }}' | grep yum | awk '{print $1}'"
   register: "repos"
 
-- name: "Configure | sync repos on satellite"
-  shell: "hammer repository synchronize --id '{{ item }}' --organization
-    {{ satellite_deployment_organization }}"
+- name: "Configure satellite | sync repos on satellite"
+  shell: "HOME=/root hammer repository synchronize --id '{{ item }}' --organization
+    '{{ satellite_deployment_organization }}'"
   with_items: "{{ repos.stdout_lines }}"
   register: "sync_repos_result"
   retries: 3
-  until: "{{ sync_repos_result | success }}"
+  until: sync_repos_result|success
+  tags: 
+    - sync
+
+# Create a sync plan
+- name: "Configure satellite | list daily sync plan"
+  shell: "HOME=/root hammer sync-plan list 
+    --organization-id 1 --name 'Daily Sync' | grep 'Daily Sync'"
+  register: "sync_plan_result"
+  ignore_errors: "yes"
+
+- name: "Configure satellite | create daily sync plan"
+  shell: "HOME=/root hammer sync-plan create 
+    --organization '{{ satellite_deployment_organization }}'
+    --enabled true --interval daily
+    --description \"Sync err'day.\"
+    --name 'Daily Sync'
+    --sync-date `date '+%Y-%m-%d'`"
+  when: sync_plan_result.stdout == ""
+
+- name: "Configure satellite | apply daily sync plan"
+  shell: "HOME=/root hammer product set-sync-plan
+    --name '{{ item.product_name }}'
+    --sync-plan 'Daily Sync' --organization '{{ satellite_deployment_organization }}'"
+  with_items: "{{ satellite_deployment_repositories }}"
+
+# Change default URLs
+- name: "Configure satellite | set foreman_url"
+  shell: "HOME=/root hammer settings set
+    --name foreman_url --value https://{{ satellite_deployment_hostname_full }}"
+
+- name: "Configure satellite | set unattended_url"
+  shell: "HOME=/root hammer settings set
+    --name unattended_url --value https://{{ satellite_deployment_hostname_full }}"
+
+# Red Hat Satellite Server 6.3.0 has WebUI bugs where the sync status doesn't update.
+- name: "Configure satellite | https://bugzilla.redhat.com/show_bug.cgi?id=1551957"
+  cron:
+    minute: 30
+    hour: 7
+    job: "curl -u 'admin:{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}' -k -H 'content-type: application/json' -X PUT 'https://{{satellite_deployment_hostname_full }}/katello/api/organizations/1/sync_plans/1/sync' >& /dev/null"
+
+# Create content publish / recovery cront job
+- name: "Configure satellite | Create /usr/local/bin/publish_content.rb"
+  template:
+    src: "publish_content.rb.j2"
+    dest: "/usr/lcoal/bin/publish_content.rb.j2"
+    mode: 0755
+    owner: root
+    group: root
+
+- name: "Configure satellite | create content update cron job"
+  cron:
+    minute: 30
+    hour: 8
+    weekday: 2
+    job: "/usr/local/bin/publish_content.rb.j2"
+
+
+#Copy the manifest
+- name: "Configure satellite | copy manifest"
+  become: "yes"
+  copy:
+    src: "{{ satellite_deployment_manifest_path }}"
+    dest: "{{ satellite_deployment_manifest_dest_path }}"
+  when: not satellite_deployment_remote_manifest
+
+- name: "Configure satellite | copy manifest from remote"
+  become: "yes"
+  get_url:
+    url: "{{ satellite_deployment_manifest_path }}"
+    dest: "{{ satellite_deployment_manifest_dest_path }}"
+  when: satellite_deployment_remote_manifest
+
+#Upload the manifest to the satellite
+- name: "Configure satellite | upload the manifest"
+  become: "yes"
+  shell: "HOME=/root hammer subscription upload --file
+    {{ satellite_deployment_manifest_dest_path }} --organization
+    '{{ satellite_deployment_organization }}'"
+  ignore_errors: "yes"
+
+#Enabling repos on satellite
+- name: "Configure satellite | enable repos"
+  become: "yes"
+  shell: "HOME=/root hammer repository-set '{{ item.state }}' --organization
+    '{{ satellite_deployment_organization }}'
+    --product '{{ item.product_name }}' --name '{{ item.name_repo }}'
+    {% if item.rel is defined %} --releasever '{{ item.rel }}' {% endif %}
+    --basearch '{{ item.architecture}}'"
+  with_items: "{{ satellite_deployment_repositories }}"
+  ignore_errors: "yes"
+  tags:
+    - enable_repos
+
+#Get the repos ids and sync the repos
+- name: "Configure satellite | grab repositories uuid"
+  shell: "HOME=/root hammer repository list --organization
+    '{{ satellite_deployment_organization }}' | grep yum | awk '{print $1}'"
+  register: "repos"
+
+- name: "Configure satellite | sync repos on satellite"
+  shell: "HOME=/root hammer repository synchronize --id '{{ item }}' --organization
+    '{{ satellite_deployment_organization }}'"
+  with_items: "{{ repos.stdout_lines }}"
+  register: "sync_repos_result"
+  retries: 3
+  until: sync_repos_result|success
+  tags: 
+    - sync
+
+# Create a sync plan
+- name: "Configure satellite | list daily sync plan"
+  shell: "HOME=/root hammer sync-plan list 
+    --organization-id 1 --name 'Daily Sync' | grep 'Daily Sync'"
+  register: "sync_plan_result"
+  ignore_errors: "yes"
+
+- name: "Configure satellite | create daily sync plan"
+  shell: "HOME=/root hammer sync-plan create 
+    --organization '{{ satellite_deployment_organization }}'
+    --enabled true --interval daily
+    --description \"Sync err'day.\"
+    --name 'Daily Sync'
+    --sync-date `date '+%Y-%m-%d'`"
+  when: sync_plan_result.stdout == ""
+
+- name: "Configure satellite | apply daily sync plan"
+  shell: "HOME=/root hammer product set-sync-plan
+    --name '{{ item.product_name }}'
+    --sync-plan 'Daily Sync' --organization '{{ satellite_deployment_organization }}'"
+  with_items: "{{ satellite_deployment_repositories }}"
+
+# Change default URLs
+- name: "Configure satellite | set foreman_url"
+  shell: "HOME=/root hammer settings set
+    --name foreman_url --value https://{{ satellite_deployment_hostname_full }}"
+
+- name: "Configure satellite | set unattended_url"
+  shell: "HOME=/root hammer settings set
+    --name unattended_url --value https://{{ satellite_deployment_hostname_full }}"
+
+# Red Hat Satellite Server 6.3.0 has WebUI bugs where the sync status doesn't update.
+- name: "Configure satellite | https://bugzilla.redhat.com/show_bug.cgi?id=1551957"
+  cron:
+    minute: 30
+    hour: 7
+    job: "curl -u 'admin:{{ lookup('password', '/root/.satellite_password length=15 chars=ascii_letters') }}' -k -H 'content-type: application/json' -X PUT 'https://{{satellite_deployment_hostname_full }}/katello/api/organizations/1/sync_plans/1/sync' >& /dev/null"
+
+# Create content publish / recovery cront job
+- name: "Configure satellite | Create /usr/local/bin/publish_content.rb"
+
+

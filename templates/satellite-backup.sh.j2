@@ -1,0 +1,21 @@
+#!/bin/bash
+
+PATH=${PATH}:/sbin:/usr/sbin:/usr/local/bin
+TARGET=$(mktemp -d -p /var/lib/pulp)
+set -o errexit -o errtrace -o pipefail
+trap cleanup ERR
+
+function cleanup {
+  if [ -d $TARGET ]; then
+    rm -rf $TARGET
+  fi
+}
+
+if [ ! -z "$TARGET" ]; then
+  chgrp postgres $TARGET
+  chmod g+rwx $TARGET
+  satellite-backup --features all $TARGET -y &> /dev/null
+  echo $(cd $TARGET ; ls) > $TARGET/latest
+  aws s3 cp --recursive $TARGET/ s3://{{ satellite_backup_bucket }}/backups/ &> /dev/null
+  cleanup
+fi

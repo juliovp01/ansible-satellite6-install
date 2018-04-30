@@ -1,9 +1,10 @@
 ---
 - hosts: satellite-server
   roles:
-    - role: 'ntp'
+    - role: volumes
+    - role: ntp
       ntp_server:
-        - '0.pool.ntp.org'
-    - role: "satellite-deployment"
+        - '169.254.169.123'
+    - role: satellite-deployment
   vars_files:
     - "{{ satellite_deployment_vars }}"

@@ -1,0 +1,15 @@
+---
+- name: "Configure content loop 2 | Get red hat satellite tools product labels"
+  shell: "HOME=/root hammer activation-key product-content 
+    --name {{ env.name }}-autoreg
+    --organization '{{ satellite_deployment_organization }}'
+    | egrep -o 'rhel-.*-server-satellite-tools-.*-rpms'"
+  register: product_labels
+
+- name: "Configure content loop 2 | Override enable for satellite tools product"
+  shell: "HOME=/root hammer activation-key content-override 
+    --content-label {{ item }} 
+    --name {{ env.name }}-autoreg 
+    --value 1 
+    --organization '{{ satellite_deployment_organization }}'"
+  with_items: "{{ product_labels.stdout_lines }}"
