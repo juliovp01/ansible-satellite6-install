@@ -40,7 +40,21 @@ def post_json(location, json_data = {})
     :headers => { :accept => :json, :content_type => :json },
     :payload => JSON.generate(json_data)
   ).execute
-#  JSON.parse(response.to_str)
+  JSON.parse(response.to_str)
+end
+
+# Performs a POST using the passed URL location
+def delete_json(location, json_data = {})
+  location = "#{location}"
+  response = RestClient::Request.new(
+    :method => :delete,
+    :url => location,
+    :user => $username,
+    :password => $password,
+    :headers => { :accept => :json, :content_type => :json },
+    :payload => JSON.generate(json_data)
+  ).execute
+  JSON.parse(response.to_str)
 end
 
 def poll_task(id)
@@ -49,6 +63,7 @@ def poll_task(id)
     sleep 5
     poll_result = get_json("#{TASKS_URL}/tasks/#{id}")
   end
+  puts "id: #{id} state: #{poll_result['state']} result: #{poll_result['resultl']}"
   poll_result['result']
 end
 
@@ -82,12 +97,23 @@ puts res
 
 # Publish the new version of the content view to each lifecycle environment, in order
 if res == "success"
-  version = get_json("#{KATELLO_URL}/content_views/#{my_content_view['id']}/")['versions'].sort { |v1, v2| v1['version'] <=> v2['version'] }.last['id']
+  content_view_versions = get_json("#{KATELLO_URL}/content_views/#{my_content_view['id']}/")['versions'].sort { |v1, v2| v1['version'] <=> v2['version'] }
+  version_id = content_view_versions.last['id']
   order.each do |e|
-    print "Promoting version #{version} of #{CV_NAME} to #{e['name']}..."
-    promote_task = post_json("#{KATELLO_URL}/content_view_versions/#{version}/promote", {'environment_id' => e['id']})
+    print "Promoting version #{version_id} of #{CV_NAME} to #{e['name']}..."
+    promote_task = post_json("#{KATELLO_URL}/content_view_versions/#{version_id}/promote", {'environment_id' => e['id']})
     res = poll_task promote_task['id']
     print res
     sleep 60
   end
 end
+
+# Cleanup everything except for the last three versions
+content_view_versions[0..-3].each do |v|
+  print "Deleting version v['version']..."
+  delete_task = delete_json("#{KATELLO_URL}/content_view_versions/#{v['id']}"
+  res = poll_task delete_task['id']
+  print res
+end
+
+
