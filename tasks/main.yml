@@ -8,3 +8,4 @@
 - include: install_satellite.yml
 - include: configure_satellite.yml
 - include: configure_capsule.yml
+  when: "{{ satellite_configure_capsule }}"
