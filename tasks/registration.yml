@@ -1,5 +1,6 @@
 ---
 #Registering system with RHN.
+
 - name: "RHN | registering system with RHN"
   redhat_subscription:
     state: "present"
