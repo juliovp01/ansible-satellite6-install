@@ -1,4 +1,5 @@
 ---
+
 #Create Hammer directory on /root
 - name: "Configure | create .hammer directory on user"
   file:

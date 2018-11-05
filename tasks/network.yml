@@ -1,4 +1,5 @@
 ---
+
 - name: "Set network interface IP"
   shell: "nmcli con mod {{ satellite_deployment_net_interface }}
     ipv4.addresses '{{ satellite_deployment_ip_address }}/{{
